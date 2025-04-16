@@ -417,9 +417,29 @@ function renderTextLayer(layer) {
     const lines = layer.text.split('\n');
     const lineHeight = layer.fontSize * 1.2; // 行高為字體大小的 1.2 倍
 
+    // 計算文字的起始 Y 位置：至少要留出一個字體大小的空間
+    const startY = Math.max(layer.fontSize, 30);
+
     // 繪製每一行文字
     lines.forEach((line, index) => {
-        const y = 30 + (index * lineHeight);
+        const y = startY + (index * lineHeight);
+
+        // 確保有足夠的畫布高度
+        if (y + lineHeight > layer.content.height) {
+            // 擴展畫布高度
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = layer.content.width;
+            newCanvas.height = y + lineHeight + layer.fontSize; // 額外加上一個字體大小的空間
+            const newCtx = newCanvas.getContext('2d');
+            newCtx.drawImage(layer.content, 0, 0);
+            layer.content = newCanvas;
+            ctx = newCtx;
+
+            // 重新設置字型，因為畫布已經更換
+            ctx.font = `${fontStyle}${layer.fontSize}px ${layer.fontFamily}`;
+            ctx.fillStyle = layer.fontColor;
+        }
+
         ctx.fillText(line, 10, y);
 
         // 繪製底線
@@ -855,10 +875,13 @@ function handleCanvasDoubleClick(e) {
 function showTextInput(x, y) {
     const layer = app.layers[app.activeLayerIndex];
 
+    // 計算文字的起始 Y 位置
+    const startY = Math.max(layer.fontSize, 30);
+
     // 設置文字輸入框位置
     app.textInputContainer.style.display = 'block';
     app.textInputContainer.style.left = (layer.x + 10) + 'px';
-    app.textInputContainer.style.top = (layer.y + 10) + 'px';
+    app.textInputContainer.style.top = (layer.y + startY - layer.fontSize) + 'px';
 
     // 設置文字輸入框樣式
     app.textInput.style.fontFamily = layer.fontFamily;
@@ -867,7 +890,11 @@ function showTextInput(x, y) {
     app.textInput.style.fontWeight = layer.fontBold ? 'bold' : 'normal';
     app.textInput.style.fontStyle = layer.fontItalic ? 'italic' : 'normal';
     app.textInput.style.textDecoration = layer.fontUnderline ? 'underline' : 'none';
-    app.textInput.style.whiteSpace = 'pre-wrap'; // 保留換行和空格
+    app.textInput.style.whiteSpace = 'pre-wrap';
+    app.textInput.style.minHeight = layer.fontSize + 'px';
+    app.textInput.style.padding = '0';
+    app.textInput.style.margin = '0';
+    app.textInput.style.lineHeight = (layer.fontSize * 1.2) + 'px';
 
     // 將換行符號轉換為 <br> 標籤
     app.textInput.innerHTML = layer.text.replace(/\n/g, '<br>');
