@@ -413,19 +413,26 @@ function renderTextLayer(layer) {
     ctx.font = `${fontStyle}${layer.fontSize}px ${layer.fontFamily}`;
     ctx.fillStyle = layer.fontColor;
 
-    // 繪製文字
-    ctx.fillText(layer.text, 10, 30);
+    // 分割文字為多行
+    const lines = layer.text.split('\n');
+    const lineHeight = layer.fontSize * 1.2; // 行高為字體大小的 1.2 倍
 
-    // 繪製底線
-    if (layer.fontUnderline) {
-        const textWidth = ctx.measureText(layer.text).width;
-        ctx.beginPath();
-        ctx.moveTo(10, 32);
-        ctx.lineTo(10 + textWidth, 32);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = layer.fontColor;
-        ctx.stroke();
-    }
+    // 繪製每一行文字
+    lines.forEach((line, index) => {
+        const y = 30 + (index * lineHeight);
+        ctx.fillText(line, 10, y);
+
+        // 繪製底線
+        if (layer.fontUnderline) {
+            const textWidth = ctx.measureText(line).width;
+            ctx.beginPath();
+            ctx.moveTo(10, y + 2);
+            ctx.lineTo(10 + textWidth, y + 2);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = layer.fontColor;
+            ctx.stroke();
+        }
+    });
 }
 
 // 渲染畫布
@@ -860,9 +867,10 @@ function showTextInput(x, y) {
     app.textInput.style.fontWeight = layer.fontBold ? 'bold' : 'normal';
     app.textInput.style.fontStyle = layer.fontItalic ? 'italic' : 'normal';
     app.textInput.style.textDecoration = layer.fontUnderline ? 'underline' : 'none';
+    app.textInput.style.whiteSpace = 'pre-wrap'; // 保留換行和空格
 
-    // 設置文字內容
-    app.textInput.textContent = layer.text;
+    // 將換行符號轉換為 <br> 標籤
+    app.textInput.innerHTML = layer.text.replace(/\n/g, '<br>');
 
     // 聚焦文字輸入框
     app.textInput.focus();
@@ -873,7 +881,10 @@ function applyTextInput() {
     if (app.activeLayerIndex < 0 || app.layers[app.activeLayerIndex].type !== LayerType.TEXT) return;
 
     const layer = app.layers[app.activeLayerIndex];
-    layer.text = app.textInput.textContent || '雙擊編輯文字';
+    // 將 HTML 的 <br> 標籤轉換為換行符號
+    const text = app.textInput.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+    // 移除其他 HTML 標籤，但保留換行符號
+    layer.text = text.replace(/<[^>]*>/g, '') || '雙擊編輯文字';
 
     // 重新渲染文字
     renderTextLayer(layer);
@@ -1070,38 +1081,34 @@ function openImageFile(file) {
     reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
+            // 調整畫布大小為圖片大小
+            app.canvas.width = img.width;
+            app.canvas.height = img.height;
+            app.tempCanvas.width = img.width;
+            app.tempCanvas.height = img.height;
+
+            // 更新畫布尺寸信息
+            document.getElementById('canvas-info').textContent = `${img.width} x ${img.height} px`;
+
+            // 重設所有圖層
+            app.layers = [];
+            app.activeLayerIndex = -1;
+            app.history = [];
+            app.historyIndex = -1;
+
+            // 添加背景圖層（白色）
+            addLayer('背景', LayerType.BITMAP);
+
             // 創建新圖層
             const layer = addLayer(file.name, LayerType.BITMAP);
 
             // 將圖片繪製到圖層上
             const ctx = layer.content.getContext('2d');
-
-            // 計算縮放比例，確保圖片完全顯示在畫布中
-            const scale = Math.min(
-                app.canvas.width / img.width,
-                app.canvas.height / img.height
-            );
-
-            // 計算縮放後的尺寸
-            const scaledWidth = img.width * scale;
-            const scaledHeight = img.height * scale;
-
-            // 計算居中位置
-            const x = (app.canvas.width - scaledWidth) / 2;
-            const y = (app.canvas.height - scaledHeight) / 2;
-
-            // 清空圖層
-            ctx.clearRect(0, 0, layer.content.width, layer.content.height);
-
-            // 繪製圖片
-            ctx.drawImage(img, 0, 0, img.width, img.height, x, y, scaledWidth, scaledHeight);
+            ctx.drawImage(img, 0, 0);
 
             // 更新畫布
             render();
             saveToHistory();
-
-            // 移除成功提示
-            // alert('圖片已成功載入為新圖層');
         };
         img.onerror = function() {
             alert('載入圖片失敗');
