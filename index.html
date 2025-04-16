@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡易圖像編輯器</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="container">
+        <div class="menu-bar">
+            <div class="menu-left">
+                <span class="menu-item">
+                    檔案
+                    <div class="dropdown-content">
+                        <div id="new-file">新建</div>
+                        <div id="open-file">開啟</div>
+                        <div id="save-file">儲存</div>
+                        <div id="export-file">匯出為 PNG</div>
+                    </div>
+                </span>
+                <span class="menu-item">
+                    編輯
+                    <div class="dropdown-content">
+                        <div id="undo">復原</div>
+                        <div id="redo">重做</div>
+                        <div id="delete-layer">刪除圖層</div>
+                    </div>
+                </span>
+                <span class="menu-item">
+                    圖層
+                    <div class="dropdown-content">
+                        <div id="add-image-layer">新增圖片圖層</div>
+                        <div id="add-text-layer">新增文字圖層</div>
+                        <div id="duplicate-layer">複製圖層</div>
+                        <div id="merge-down">向下合併</div>
+                    </div>
+                </span>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="tool-button" id="move-tool" title="移動工具">移動</button>
+            <button class="tool-button" id="text-tool" title="文字工具">文字</button>
+            <button class="tool-button" id="brush-tool" title="畫筆工具">畫筆</button>
+            <button class="tool-button" id="eraser-tool" title="橡皮擦工具">橡皮擦</button>
+            <input type="color" id="color-picker" value="#000000" title="顏色選擇器">
+            <select id="brush-size" title="畫筆大小">
+                <option value="1">1px</option>
+                <option value="3">3px</option>
+                <option value="5" selected>5px</option>
+                <option value="10">10px</option>
+                <option value="20">20px</option>
+            </select>
+        </div>
+
+        <div class="content">
+            <div class="layers-panel">
+                <h3>圖層</h3>
+                <div id="layers-list">
+                    <!-- 圖層會在這裡動態添加 -->
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="tool-button" id="add-layer">新增圖層</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <div id="canvas-wrapper">
+                    <canvas id="main-canvas" width="800" height="600"></canvas>
+                    <div class="text-input-container">
+                        <div id="text-input" contenteditable="true"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="properties-panel">
+                <h3>屬性</h3>
+
+                <div class="property-group">
+                    <div class="property-title">圖層屬性</div>
+                    <div class="property-item">
+                        <label for="layer-name">名稱</label>
+                        <input type="text" id="layer-name">
+                    </div>
+                    <div class="property-item">
+                        <label for="layer-opacity">不透明度</label>
+                        <input type="range" id="layer-opacity" min="0" max="100" value="100">
+                    </div>
+                    <div class="property-item">
+                        <label for="blend-mode">混合模式</label>
+                        <select id="blend-mode">
+                            <option value="normal">正常</option>
+                            <option value="multiply">乘法</option>
+                            <option value="screen">螢幕</option>
+                            <option value="overlay">覆蓋</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="property-group" id="text-properties" style="display: none;">
+                    <div class="property-title">文字屬性</div>
+                    <div class="property-item">
+                        <label for="font-family">字型</label>
+                        <select id="font-family">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="property-item">
+                        <label for="font-size">字型大小</label>
+                        <input type="number" id="font-size" min="8" max="200" value="20">
+                    </div>
+                    <div class="property-item">
+                        <label for="font-color">字型顏色</label>
+                        <input type="color" id="font-color" value="#000000">
+                    </div>
+                    <div class="property-item">
+                        <label>字型樣式</label>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <button class="tool-button" id="font-bold" title="粗體">B</button>
+                            <button class="tool-button" id="font-italic" title="斜體">I</button>
+                            <button class="tool-button" id="font-underline" title="底線">U</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          <!-- 在 properties-panel 中添加下面的代碼，放在文字屬性面板的後面 -->
+
+<div class="property-group" id="image-properties" style="display: none;">
+    <div class="property-title">圖片屬性</div>
+    <div class="property-item">
+        <label for="layer-width">寬度 (像素)</label>
+        <input type="number" id="layer-width" min="20" step="1">
+    </div>
+    <div class="property-item">
+        <label for="layer-height">高度 (像素)</label>
+        <input type="number" id="layer-height" min="20" step="1">
+    </div>
+    <div class="property-item">
+        <label>
+            <input type="checkbox" id="lock-aspect-ratio">
+            鎖定長寬比
+        </label>
+    </div>
+</div>
+
+        </div>
+
+        <div class="status-bar">
+            <div id="canvas-info">800 x 600 px</div>
+            <div id="tool-info">工具: 移動</div>
+            <div id="position-info">位置: 0, 0</div>
+        </div>
+    </div>
+
+    <!-- 新建檔案對話框 -->
+    <div id="new-file-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">新建檔案</div>
+            <div class="modal-form-group">
+                <label for="new-width">寬度 (像素)</label>
+                <input type="number" id="new-width" value="800" min="1" max="5000">
+            </div>
+            <div class="modal-form-group">
+                <label for="new-height">高度 (像素)</label>
+                <input type="number" id="new-height" value="600" min="1" max="5000">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel" id="new-file-cancel">取消</button>
+                <button class="modal-button confirm" id="new-file-confirm">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 圖片上傳的隱藏輸入 -->
+    <input type="file" id="file-input" style="display: none;" accept="image/*">
+
+<script src="main.js"></script>
+
+<script>
+document.getElementById('text-input').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // 阻止默認的換行行為
+        document.execCommand('insertHTML', false, '<br><br>'); // 插入兩個 <br> 標籤以確保換行
+    }
+});
+</script>
+</body>
+</html>
